@@ -6,60 +6,70 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/go-ping/ping"
 )
 
 func main() {
-	hosts := make(chan string)
-	defer close(hosts)
 
-	getEnabledHosts(hosts)
+	fmt.Println("Hello User))")
+	fmt.Println("Let's scan your local network!!!")
 
-	for host := range hosts {
+	// scanLocalNetwork()
+	fmt.Println(getPrefIP())
+	pinger, err := ping.NewPinger("10.3.1.138")
+	if err != nil {
+		fmt.Println("ERRRRRRRR")
+	}
+	fmt.Println(pinger.Run())
+	fmt.Println(pinger.Statistics())
+}
+
+func scanLocalNetwork() {
+
+	hosts := getEnabledHosts()
+
+	for _, host := range hosts {
 		if host == "" {
 			fmt.Println(host)
 			continue
-		} else {
+		}
 
-			ports := make(chan int)
+		ports := make(chan int)
 
-			func() {
-				defer close(ports)
-				checkAddressPorts(host, ports)
-			}()
+		func() {
+			defer close(ports)
+			checkAddressPorts(host, ports)
+		}()
 
-			fmt.Printf("HOST:: %v\n", host)
-			for i := range ports {
-				if i != 0 {
-					fmt.Printf("\tport %d is open\n", i)
-				}
+		fmt.Printf("HOST:: %v\n", host)
+		for i := range ports {
+			if i != 0 {
+				fmt.Printf("\tport %d is open\n", i)
 			}
 		}
 	}
-
-	// for host := range hosts {
-	// 	fmt.Printf("HOST::%v\n", host)
-
 }
 
-func getEnabledHosts(hosts chan string) {
+func getEnabledHosts() []string {
 	baseIP := getPrefIP()
 
+	var hosts []string
+
 	for i := 1; i <= 255; i++ {
-		go func(i int) {
-			cmd := exec.Command("ping", "-c", "1", "-W", "1", fmt.Sprintf("%v:%d", baseIP, i))
-			if err := cmd.Run(); err != nil {
-				hosts <- ""
-				return
-			}
+		cmd := exec.Command("ping", "-c", "1", "-W", "1", fmt.Sprintf("%v:%d", baseIP, i))
+		if err := cmd.Run(); err != nil {
+			continue
+		}
 
-			if err := cmd.Wait(); err != nil {
-				hosts <- ""
-				return
-			}
+		if err := cmd.Wait(); err != nil {
+			continue
+		}
 
-			hosts <- fmt.Sprintf("%v:%d", baseIP, i)
-		}(i)
+		hosts = append(hosts, fmt.Sprintf("%v:%d", baseIP, i))
 	}
+
+	return hosts
 }
 
 func getPrefIP() string {
@@ -70,7 +80,7 @@ func getPrefIP() string {
 	ip := addr.String()
 
 	ipArr := strings.Split(ip, ".")
-	baseIP := strings.Join(ipArr[0:len(ipArr)-2], ".")
+	baseIP := strings.Join(ipArr[0:len(ipArr)-1], ".") + "."
 
 	return baseIP
 }
