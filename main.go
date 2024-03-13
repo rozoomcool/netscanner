@@ -6,8 +6,6 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-
-	"github.com/go-ping/ping"
 )
 
 func main() {
@@ -15,14 +13,22 @@ func main() {
 	fmt.Println("Hello User))")
 	fmt.Println("Let's scan your local network!!!")
 
-	// scanLocalNetwork()
-	fmt.Println(getPrefIP())
-	pinger, err := ping.NewPinger("10.3.1.138")
-	if err != nil {
-		fmt.Println("ERRRRRRRR")
+	scanIP("localhost")
+
+}
+
+func scanIP(host string) {
+	ports := make(chan int)
+	func() {
+		defer close(ports)
+		checkAddressPorts(host, ports)
+	}()
+
+	for p := range ports {
+		if p != 0 {
+			fmt.Printf("PORT %v is open\n", p)
+		}
 	}
-	fmt.Println(pinger.Run())
-	fmt.Println(pinger.Statistics())
 }
 
 func scanLocalNetwork() {
