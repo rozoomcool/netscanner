@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	fmt.Println("Hello User))")
+	fmt.Println("Start scan network")
 	fmt.Println("Let's scan your local network!!!")
 
 	scanIP("localhost")
